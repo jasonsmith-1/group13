@@ -1,4 +1,4 @@
-# AI Security Log Monitor
+# AI LangGraph Agentic Security Log Monitor
 
 An AI-powered security log monitoring system that ingests server logs via a REST API, displays them in an interactive dashboard, and runs an autonomous LangGraph agent to detect and classify security threats in real time.
 
@@ -30,14 +30,14 @@ The LangGraph agent processes each log entry through six sequential nodes:
 log_ingest → sequence_analyzer → payload_inspector → behavior_profiler → risk_aggregator → alert_classifier
 ```
 
-| Node | Purpose |
-|------|---------|
-| **log_ingest** | Ingests raw event data into agent state |
-| **sequence_analyzer** | Detects login velocity, sequential object access, request frequency, repeated actions |
-| **payload_inspector** | Scans for SQL injection signatures, unexpected fields (isAdmin, role), command injection |
-| **behavior_profiler** | Evaluates geographic deviation, role deviation, user agent anomalies (e.g. sqlmap) |
-| **risk_aggregator** | Computes weighted risk score (40% sequence + 40% payload + 20% behavior) |
-| **alert_classifier** | Classifies threat type: `SQL_INJECTION`, `CREDENTIAL_STUFFING`, `POSSIBLE_IDOR`, `BUSINESS_LOGIC_ABUSE` |
+| Node                  | Purpose                                                                                                 |
+| --------------------- | ------------------------------------------------------------------------------------------------------- |
+| **log_ingest**        | Ingests raw event data into agent state                                                                 |
+| **sequence_analyzer** | Detects login velocity, sequential object access, request frequency, repeated actions                   |
+| **payload_inspector** | Scans for SQL injection signatures, unexpected fields (isAdmin, role), command injection                |
+| **behavior_profiler** | Evaluates geographic deviation, role deviation, user agent anomalies (e.g. sqlmap)                      |
+| **risk_aggregator**   | Computes weighted risk score (40% sequence + 40% payload + 20% behavior)                                |
+| **alert_classifier**  | Classifies threat type: `SQL_INJECTION`, `CREDENTIAL_STUFFING`, `POSSIBLE_IDOR`, `BUSINESS_LOGIC_ABUSE` |
 
 ## Project Structure
 
@@ -88,10 +88,10 @@ uvicorn server:app --reload
 
 Runs at `http://localhost:8000`.
 
-| Method | Path   | Description                           |
-|--------|--------|---------------------------------------|
-| GET    | /logs  | Returns mock security log data        |
-| GET    | /docs  | Interactive Swagger API docs          |
+| Method | Path  | Description                    |
+| ------ | ----- | ------------------------------ |
+| GET    | /logs | Returns mock security log data |
+| GET    | /docs | Interactive Swagger API docs   |
 
 ### 2. Launch the Streamlit dashboard
 
