@@ -121,10 +121,35 @@ def main():
 
         # passing the openrouter client is needed since the
         # user is entering it here in the UI
-        result = run_agent(input_data, st.session_state.openrouter_client)
+        with st.spinner("Running agent pipeline (LLM intent parsing + analysis + threat narrative)..."):
+            result = run_agent(input_data, st.session_state.openrouter_client)
 
-       
+
         st.header('Security Vulnerabilities')
+
+        # Agent decision path
+        analysis_mode = result.get("analysis_mode", "full")
+        retry_count = result.get("retry_count", 0)
+        deep_dive = result.get("deep_dive_findings")
+
+        mode_labels = {
+            "full": "Full Analysis (all analyzers)",
+            "payload_focus": "Payload-Focused (SQL/XSS/injection)",
+            "sequence_focus": "Sequence-Focused (login/credential patterns)",
+            "behavior_focus": "Behavior-Focused (anomalous users)",
+        }
+
+        with st.expander("Agent Decision Path", expanded=True):
+            path_cols = st.columns(3)
+            path_cols[0].metric("Analysis Mode", mode_labels.get(analysis_mode, analysis_mode))
+            path_cols[1].metric("Retry Loops", retry_count)
+            path_cols[2].metric("Deep-Dive", deep_dive.get("attack_type", "None") if deep_dive else "Skipped")
+
+            if retry_count > 0:
+                st.caption("The agent widened from a focused scan to full analysis after initial results were inconclusive.")
+            if deep_dive:
+                st.caption(f"Specialist **{deep_dive.get('attack_type')}** analyzer ran for enriched findings.")
+
         st.subheader("Risk Assessment:")
 
         # Overall risk score
@@ -150,6 +175,32 @@ def main():
         risk_factors = result.get("risk_factors", [])
         if risk_factors:
             st.error("Risk Factors: " + ", ".join(risk_factors))
+
+        # Deep-dive specialist findings
+        if deep_dive:
+            st.subheader("Specialist Deep-Dive Findings")
+            display_findings = {
+                k: v for k, v in deep_dive.items()
+                if k != "attack_type" and v and v != [] and v != {}
+            }
+            if display_findings:
+                for key, value in display_findings.items():
+                    label = key.replace("_", " ").title()
+                    if isinstance(value, bool):
+                        st.write(f"- **{label}:** {'Yes' if value else 'No'}")
+                    elif isinstance(value, list):
+                        st.write(f"- **{label}:** {', '.join(str(v) for v in value)}")
+                    elif isinstance(value, dict):
+                        st.write(f"- **{label}:**")
+                        st.json(value)
+                    else:
+                        st.write(f"- **{label}:** {value}")
+
+        # AI-generated threat narrative
+        threat_narrative = result.get("threat_narrative")
+        if threat_narrative:
+            st.subheader("AI Threat Analysis")
+            st.info(threat_narrative)
 
         # Build a single DataFrame with all feature scores
         feature_data = {}
