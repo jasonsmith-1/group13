@@ -111,6 +111,23 @@ def main():
     else:
         query = selection
 
+    if not api_key:
+        st.warning("No API key detected. Please enter your OpenRouter API key in the sidebar to get started.")
+        st.info(
+            "**How to set up your API key:**\n"
+            "1. Go to [openrouter.ai/keys](https://openrouter.ai/keys) and create an API key\n"
+            "2. Enter it in the **OpenRouter API Key** field in the sidebar\n"
+            "3. Alternatively, create a `.env` file in the project root with:\n"
+            "   ```\n"
+            "   OPENROUTER_API_KEY=your_key_here\n"
+            "   ```"
+        )
+        st.stop()
+
+    if 'openrouter_client' not in st.session_state:
+        st.warning("API key was entered but the connection has not been verified yet. Check the sidebar for status.")
+        st.stop()
+
     if st.button("Run Agent", type="primary"):
         input_data = {
             "message": "Analyze this log",
