@@ -25,9 +25,15 @@ def main():
     with st.sidebar:
         st.header("🔧 Configuration")
         
-        # API Key
-        api_key = st.text_input("OpenRouter API Key", type="password", help="Get your API key from https://openrouter.ai/keys")
-        
+        # API Key - check .env first, fall back to text input
+        load_dotenv()
+        env_api_key = os.getenv("OPENROUTER_API_KEY")
+        if env_api_key:
+            api_key = env_api_key
+            st.info("Using API key from .env file")
+        else:
+            api_key = st.text_input("OpenRouter API Key", type="password", help="Get your API key from https://openrouter.ai/keys")
+
         if api_key:
             try:
                 # Test the API key with a simple call
