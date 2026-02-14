@@ -97,27 +97,19 @@ def main():
         st.info("No logs available.")
 
     st.header("What should we look for?")
-    query = st.text_input("User Query")
+    options = [
+        "Show failed logins",
+        "Detect SQL injection attempts",
+        "Find credential stuffing patterns",
+        "Custom..."
+    ]
 
-    # Style the Run Agent button: 200% larger with pale green background
-    st.markdown("""
-        <style>
-        div.stButton > button[kind="primary"] {
-            font-size: 3em;
-            padding: 0.6em 2em;
-            background-color: #2e7d32;
-            color: #e8f5e9;
-            border: 3px solid #1b5e20;
-            border-radius: 1em;
-            font-weight: bold;
-        }
-        div.stButton > button[kind="primary"]:hover {
-            background-color: #1b5e20;
-            border-color: #0a3d0a;
-            color: #e8f5e9;
-        }
-        </style>
-    """, unsafe_allow_html=True)
+    selection = st.selectbox("User Query", options)
+
+    if selection == "Custom...":
+        query = st.text_input("Enter custom query")
+    else:
+        query = selection
 
     if st.button("Run Agent", type="primary"):
         input_data = {
