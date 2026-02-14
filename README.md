@@ -6,25 +6,13 @@ The agent pipeline analyzes request sequences, inspects payloads, and profiles u
 
 ![AI Security Log Monitor Dashboard](agent_screenshot.jpg)
 
-## Agent Graph
-
-![Agent Graph](graph_structure.jpg)
-
 ## Slide Deck
 
 [View Presentation](https://app.chroniclehq.com/share/a9743016-68fb-4b6f-b979-491a21bde001/f320e1fa-6e0e-4488-affa-7b05d531cc6c/intro)
 
 ## Architecture
 
-```
-┌─────────────┐    GET /logs   ┌─────────────┐    run_agent()   ┌──────────────────┐
-│  FastAPI     │ ◄───────────► │  Streamlit   │ ──────────────► │  LangGraph Agent │
-│  Log Server  │               │  Dashboard   │                 │  (7-node pipeline)│
-└─────────────┘               └──────┬───────┘                 └──────────────────┘
-      ▲                               │                                │
-      │                               │  OpenRouter API                │
-  mock_logs.json                      └────────────────────────────────┘
-```
+![Architecture](architecture.jpg)
 
 ### Agent Pipeline
 
@@ -34,15 +22,15 @@ The LangGraph agent processes each log entry through seven sequential nodes:
 log_ingest → intent_router → sequence_analyzer → payload_inspector → behavior_profiler → risk_aggregator → mini_agent_classifier
 ```
 
-| Node                       | Purpose                                                                                                                              |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| **log_ingest**             | Ingests raw event data into agent state                                                                                              |
-| **intent_router**          | Parses user query to set analysis mode and dynamic priority weights (e.g. boosting payload weight for SQL-related queries)            |
-| **sequence_analyzer**      | Detects login velocity, sequential object access, request frequency, repeated actions                                                |
-| **payload_inspector**      | Scans for SQL injection signatures, unexpected fields (isAdmin, role), command injection                                             |
-| **behavior_profiler**      | Evaluates geographic deviation, role deviation, user agent anomalies (e.g. sqlmap)                                                   |
-| **risk_aggregator**        | Computes weighted risk score using dynamic weights from the intent router (base: 40% sequence + 40% payload + 20% behavior)          |
-| **mini_agent_classifier**  | Generates candidate attack hypotheses, evaluates supporting/contradicting evidence, and selects the strongest match. Detects `SQL_INJECTION`, `CREDENTIAL_STUFFING`, `POSSIBLE_IDOR`, `BUSINESS_LOGIC_ABUSE`, or `MULTI_VECTOR_ATTACK` when top hypotheses are close in score |
+| Node                      | Purpose                                                                                                                                                                                                                                                                       |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **log_ingest**            | Ingests raw event data into agent state                                                                                                                                                                                                                                       |
+| **intent_router**         | Parses user query to set analysis mode and dynamic priority weights (e.g. boosting payload weight for SQL-related queries)                                                                                                                                                    |
+| **sequence_analyzer**     | Detects login velocity, sequential object access, request frequency, repeated actions                                                                                                                                                                                         |
+| **payload_inspector**     | Scans for SQL injection signatures, unexpected fields (isAdmin, role), command injection                                                                                                                                                                                      |
+| **behavior_profiler**     | Evaluates geographic deviation, role deviation, user agent anomalies (e.g. sqlmap)                                                                                                                                                                                            |
+| **risk_aggregator**       | Computes weighted risk score using dynamic weights from the intent router (base: 40% sequence + 40% payload + 20% behavior)                                                                                                                                                   |
+| **mini_agent_classifier** | Generates candidate attack hypotheses, evaluates supporting/contradicting evidence, and selects the strongest match. Detects `SQL_INJECTION`, `CREDENTIAL_STUFFING`, `POSSIBLE_IDOR`, `BUSINESS_LOGIC_ABUSE`, or `MULTI_VECTOR_ATTACK` when top hypotheses are close in score |
 
 ## Project Structure
 
@@ -133,13 +121,13 @@ The project includes a pytest suite in `test_risk_aggregator.py` that validates 
 pytest test_risk_aggregator.py -v
 ```
 
-| Test class                     | What it covers                                                                                        |
-| ------------------------------ | ----------------------------------------------------------------------------------------------------- |
-| **TestDefaultWeights**         | Verifies risk score calculation and risk factor detection with uniform (1.0) priority weights          |
-| **TestPayloadBoostedWeights**  | Confirms that a payload priority multiplier of 1.5 (set by intent_router for SQL queries) increases the score relative to baseline |
+| Test class                     | What it covers                                                                                                                                   |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **TestDefaultWeights**         | Verifies risk score calculation and risk factor detection with uniform (1.0) priority weights                                                    |
+| **TestPayloadBoostedWeights**  | Confirms that a payload priority multiplier of 1.5 (set by intent_router for SQL queries) increases the score relative to baseline               |
 | **TestSequenceBoostedWeights** | Confirms that a sequence priority multiplier of 1.5 (set by intent_router for credential/login queries) increases the score relative to baseline |
-| **TestBehaviorBoostedWeights** | Confirms that a behavior priority multiplier of 1.5 increases the score relative to baseline          |
-| **TestEdgeCases**              | All-zero scores, all-max scores, and boundary testing around the 0.7 risk factor threshold            |
+| **TestBehaviorBoostedWeights** | Confirms that a behavior priority multiplier of 1.5 increases the score relative to baseline                                                     |
+| **TestEdgeCases**              | All-zero scores, all-max scores, and boundary testing around the 0.7 risk factor threshold                                                       |
 
 ## Key Technologies
 
